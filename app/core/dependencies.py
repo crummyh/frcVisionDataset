@@ -12,7 +12,7 @@ from sqlmodel import Session, select
 
 from app.core import config
 from app.db.database import get_session
-from app.models.models import TokenData
+from app.models.models import TokenData, UserRole
 from app.models.schemas import Team, User
 
 # ==========={ Database }=========== #
@@ -32,7 +32,7 @@ async def handle_api_key(req: Request, db: SessionDep, key: str = Security(api_k
         select(Team).where(Team.api_key == key).where(not Team.disabled)
     )
 
-    api_key_data = res.one()
+    api_key_data = res.one_or_none()
 
     # No API key found:
     if not api_key_data:
@@ -45,7 +45,7 @@ async def handle_api_key(req: Request, db: SessionDep, key: str = Security(api_k
 
 # ==========={ Passwords }=========== #
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
@@ -58,7 +58,7 @@ def authenticate_user(
     username: str,
     password: str
 ) -> User | None:
-    user = session.exec(select(User).where(User.username == username)).one()
+    user = session.exec(select(User).where(User.username == username)).one_or_none()
     if not user:
         return None
     assert user.password
@@ -104,7 +104,7 @@ def get_current_user(
     except InvalidTokenError:
         raise credentials_exception
 
-    user = session.exec(select(User).where(User.username == token_data.username)).one()
+    user = session.exec(select(User).where(User.username == token_data.username)).one_or_none()
     if user is None:
         raise credentials_exception
 
@@ -116,5 +116,15 @@ def get_current_active_user(
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+def require_role(*roles: UserRole):
+    def role_checker(user: User = Depends(get_current_active_user)):
+        if user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Requires role: {roles}, but you have: {user.role}",
+            )
+        return user
+    return role_checker
 
 limiter = Limiter(key_func=get_remote_address)

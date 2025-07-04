@@ -26,7 +26,7 @@ Notes to self:
 * Python 3
 * FastAPI
 * SQLModel
-* SlowAPI
+* SlowAPI (Or maybe [this](https://github.com/abersheeran/asgi-ratelimit), idk yet)
 * Jinja
 * Bootstrap
 * AWS

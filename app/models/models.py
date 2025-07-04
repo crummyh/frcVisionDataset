@@ -18,6 +18,12 @@ class DownloadFormat(Enum):
     COCO   = "coco"
     RAW    = "raw"
 
+class UserRole(Enum):
+    DEFAULT     = "default"
+    TEAM_LEADER = "leader"
+    MODERATOR   = "mod"
+    ADMIN       = "admin"
+
 # ==========={ Responses }=========== #
 
 class StatsOut(BaseModel):
@@ -59,3 +65,4 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: str | None = None
+    role: UserRole | None = None

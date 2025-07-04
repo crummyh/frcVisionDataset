@@ -13,7 +13,7 @@ from app.core.dependencies import (
     get_password_hash,
 )
 from app.db.database import get_session
-from app.models.models import Token
+from app.models.models import Token, UserRole
 from app.models.schemas import User
 
 router = APIRouter()
@@ -33,7 +33,7 @@ def login(
         )
     access_token_expires = timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": user.username, "role": user.role.name}, expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
 
@@ -48,8 +48,7 @@ def create_user(
     username: str,
     email: str,
     password: str,
-    is_mod: bool,
-    is_admin: bool,
+    role: UserRole,
     session: Annotated[Session, Depends(get_session)]
 ):
     user = User(
@@ -58,8 +57,7 @@ def create_user(
         password=get_password_hash(password),
         created_at=datetime.now(timezone.utc),
         team=None,
-        is_moderator=is_mod,
-        is_admin=is_admin
+        role=role
     )
     try:
         session.add(user)
