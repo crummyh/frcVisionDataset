@@ -6,7 +6,8 @@
     "venv",
     "fastapi",
     "slowapi",
-    "pydantic"
+    "pydantic",
+    "dotenv"
   ],
   "flagWords": []
 }

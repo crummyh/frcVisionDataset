@@ -1,9 +1,6 @@
-from typing import Annotated
 
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from app.core.dependencies import oauth2_scheme
 
 subapp = FastAPI()
 origins = [ # TODO: UPDATE WITH ACTUAL URL
@@ -18,6 +15,11 @@ subapp.add_middleware(
     allow_headers=['*'],
 )
 
-@subapp.post("/create-team")
-def create_team(token: Annotated[str, Depends(oauth2_scheme)]):
-    return {"token": token}
+
+# @subapp.post("/create-team")
+# def create_team(token: Annotated[str, Depends(oauth2_scheme)]):
+#     return {"token": token}
+
+# @subapp.get("test")
+# def test(token: Annotated[str, Depends(oauth2_scheme)]):
+#     return {"token": token}

@@ -1,4 +1,7 @@
 # TODO: Sort this file
+import os
+
+from dotenv import load_dotenv
 
 PROJECT_NAME = "Temp Name"
 MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024  # 2GB
@@ -10,3 +13,8 @@ UPLOAD_INTEGRITY_HASH_ALGORITHM = "md5"
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 DEFAULT_PROCESSING_TIME = 100
 TEMPLATES_PATH = "web/templates"
+SECURE_ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+load_dotenv()
+JWT_SECRET_TOKEN = os.getenv("JWT_SECRET_KEY")

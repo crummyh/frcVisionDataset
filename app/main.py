@@ -6,13 +6,15 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import internal_v1, public_v1, web
+from app.api import auth_v1, internal_v1, public_v1, web
 from app.db.database import init_db
+from app.services import buckets
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    buckets.init()
     yield
 
 description = """
@@ -56,6 +58,7 @@ app.mount("/static", StaticFiles(directory="app/web/static"), name="static")
 app.mount("/internal", internal_v1.subapp) # TODO: Disable docs
 app.include_router(public_v1.router, prefix="/api/v1")
 app.include_router(web.router, include_in_schema=False)
+app.include_router(auth_v1.router)
 
 @app.get("/docs", include_in_schema=False)
 async def swagger_ui_html(req: Request) -> HTMLResponse:

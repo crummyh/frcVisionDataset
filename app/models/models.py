@@ -50,3 +50,12 @@ class DownloadRequest(BaseModel):
     non_match_images: bool
 
 # class DownloadInfo(BaseModel):
+
+# ==========={ Security }=========== #
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: str | None = None

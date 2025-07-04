@@ -36,8 +36,8 @@ Notes to self:
 ### Project Structure
 
 ```bash
-📁 app/
-├── 📁 api/
+📁 app/                          # Holds the main app
+├── 📁 api/                      # The actual endpoints
 │  ├─── 🐍 public_v1.py          # Publicly accessible API
 │  ├─── 🐍 internal_v1.py        # Management and account API
 │  └─── 🐍 web.py                # The website
@@ -70,14 +70,16 @@ Linux:
 ```bash
 # Pre-requirements
 # * Have git installed
-# * Have Python 3 installed
+# * Have Python 3.10+ installed
 
 # Setup
-git clone "https://github.com/crummyh/frcVisionDataset.git"
+git clone "https://github.com/crummyh/frcVisionDataset.git" # (Or use ssh)
 cd frcVisionDataset
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+chmod +x setup.sh
+./setup.sh
 # Now start working!
 # To run the app run:
 fastapi dev app/main.py

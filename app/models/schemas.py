@@ -1,14 +1,29 @@
 from datetime import datetime
 from uuid import uuid4
 
+from pydantic import EmailStr
 from pydantic.types import UUID4
-from sqlmodel import JSON, Field, SQLModel
+from sqlalchemy import JSON, Column
+from sqlmodel import Field, SQLModel
 
 from app.models.models import UploadStatus
 
 
+class User(SQLModel, table=True):
+    __tablename__ = "users" # type: ignore
+
+    id: int | None = Field(default=None, index=True, primary_key=True)
+    username: str
+    email: EmailStr | None = None
+    password: str | None
+    disabled: bool = False
+    created_at: datetime
+    team: int | None = Field(foreign_key="teams.id", index=True)
+    is_moderator: bool = False
+    is_admin: bool = False
+
 class Team(SQLModel, table=True):
-    __tablename__ = 'teams' # type: ignore
+    __tablename__ = "teams" # type: ignore
 
     id: int | None = Field(default=None, index=True, primary_key=True)
     team_number: int
@@ -17,13 +32,13 @@ class Team(SQLModel, table=True):
 
     # Security:
     api_key: str | None = Field(index=True) # sha256 Hash, not full key
-    email: str | None = None
-    disabled: bool | None = None
+    email: EmailStr | None = None
+    disabled: bool = False
 
 class UploadBatch(SQLModel, table=True):
-    __tablename__ = 'upload_batches' # type: ignore
+    __tablename__ = "upload_batches" # type: ignore
 
-    id: UUID4 | None = Field(default_factory=uuid4, index=True, primary_key=True)
+    id: UUID4 | None = Field(default_factory=uuid4, index=True, primary_key=True, unique=True)
     team_id: int = Field(foreign_key="teams.id", index=True)
     status: UploadStatus
     file_size: int | None
@@ -36,21 +51,21 @@ class UploadBatch(SQLModel, table=True):
     error_message: str | None = None
 
 class Image(SQLModel, table=True):
-    __tablename__ = 'images' # type: ignore
+    __tablename__ = "images" # type: ignore
 
     id: UUID4 | None = Field(index=True, primary_key=True)
     created_at: datetime
     created_by: int = Field(foreign_key="teams.id", index=True)
     batch: UUID4 = Field(foreign_key="upload_batches.id")
-    labels: JSON | None = None
+    labels: dict | None = Field(default=None, sa_column=Column(JSON))
     # TODO: Implement Labels
 
 class PreImage(SQLModel, table=True):
-    __tablename__ = 'pre_images' # type: ignore
+    __tablename__ = "pre_images" # type: ignore
 
-    id: UUID4 | None = Field(default_factory=uuid4, index=True, primary_key=True)
+    id: UUID4 | None = Field(default_factory=uuid4, index=True, primary_key=True, unique=True)
     created_at: datetime
     created_by: int = Field(foreign_key="teams.id", index=True)
     batch: UUID4 = Field(foreign_key="upload_batches.id")
-    labels: JSON | None = None
+    labels: dict | None = Field(default=None, sa_column=Column(JSON))
     reviewed: bool = False

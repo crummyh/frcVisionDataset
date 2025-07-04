@@ -3,3 +3,6 @@ sqlmodel == 0.0.24
 psycopg2-binary == 2.9.10
 slowapi == 0.1.9
 Pillow == 11.3.0
+pyjwt == 2.10.1
+passlib[bcrypt] == 1.7.4
+python-dotenv == 1.1.1

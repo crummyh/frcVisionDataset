@@ -1,5 +1,6 @@
 import tarfile
-from datetime import datetime
+from datetime import datetime, timezone
+from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, UploadFile
 from fastapi.exceptions import HTTPException
@@ -8,7 +9,7 @@ from sqlalchemy import func
 from sqlmodel import Session, select
 
 from app.core import config
-from app.core.dependencies import api_key_scheme, check_api_key
+from app.core.dependencies import handle_api_key
 from app.core.helpers import (
     get_hash_with_streaming,
     get_id_from_team_number,
@@ -28,10 +29,10 @@ from app.tasks.image_processing import estimate_processing_time, process_batch_a
 
 router = APIRouter()
 
-# ========== { Public API } ==========
+# ========== { Public API } ========== #
 
 @router.get("/stats", tags=["Public", "Stats"])
-def get_stats(session: Session = Depends(get_session)) -> StatsOut:
+def get_stats(session: Annotated[Session, Depends(get_session)]) -> StatsOut:
     """
     Get stats about the entire database
     """
@@ -42,7 +43,7 @@ def get_stats(session: Session = Depends(get_session)) -> StatsOut:
     return out
 
 @router.get("/stats/team/{team_number}", tags=["Public", "Stats"])
-def get_team_stats(team_number: int, session: Session = Depends(get_session)) -> TeamStatsOut:
+def get_team_stats(team_number: int, session: Annotated[Session, Depends(get_session)]) -> TeamStatsOut:
     """
     Get stats about individual teams
 
@@ -64,15 +65,14 @@ def get_team_stats(team_number: int, session: Session = Depends(get_session)) ->
     )
     return out
 
-# ========== { Auth API } ==========
+# ========== { Auth API } ========== #
 
 @router.get("/status/{batch_id}", tags=["Auth Required",  "Stats"])
 def get_batch_status(
     batch_id: UUID4,
-    api_key:  str     = Depends(api_key_scheme),
-    session:  Session = Depends(get_session)
+    api_key: Annotated[str, Depends(handle_api_key)],
+    session: Annotated[Session, Depends(get_session)]
 ) -> StatusOut:
-    check_api_key(api_key, session)
 
     batch = session.get(UploadBatch, batch_id)
     if not batch:
@@ -99,9 +99,9 @@ def upload(
     archive:          UploadFile,
     hash:             str,
     background_tasks: BackgroundTasks,
-    capture_time:     datetime = datetime.now(),
-    api_key:          str      = Depends(api_key_scheme),
-    session:          Session  = Depends(get_session)
+    api_key: Annotated[str, Depends(handle_api_key)],
+    session: Annotated[Session, Depends(get_session)],
+    capture_time:     datetime = datetime.now(timezone.utc)
 ) -> StatusOut:
     """
     Upload images to the dataset. Requires and API key
@@ -112,7 +112,6 @@ def upload(
 
     `capture_time`: The rough time that the data was gathered
     """
-    team_id = check_api_key(api_key, session)
 
     if not tarfile.is_tarfile(archive.file):
         raise HTTPException(
@@ -133,6 +132,7 @@ def upload(
         )
 
     try:
+        team_id = int(api_key)
         batch = UploadBatch(
             team_id=team_id,
             status=UploadStatus.UPLOADING,
@@ -176,8 +176,16 @@ def upload(
 
 @router.get("/download", tags=["Auth Required"])
 def download_batch(
-    api_key: str     = Depends(api_key_scheme),
-    session: Session = Depends(get_session)
+    api_key: Annotated[str, Depends(handle_api_key)],
+    session: Annotated[Session, Depends(get_session)]
 ):
-    team_id = check_api_key(api_key, session)
+    pass
+
+# ==========={ Management }=========== #
+
+@router.put("/rotate-key")
+def rotate_api_key(
+    api_key: Annotated[str, Depends(handle_api_key)],
+    session: Annotated[Session, Depends(get_session)]
+):
     pass

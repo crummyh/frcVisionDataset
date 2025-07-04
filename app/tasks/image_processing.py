@@ -10,7 +10,7 @@ to this file!
 """
 
 import tarfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import IO
 
@@ -47,7 +47,7 @@ async def process_batch_async(batch_id: UUID4, session: Session):
 
     # Update the status and time to show that we have started
     _update_batch_property("status", UploadStatus.PROCESSING)
-    _update_batch_property("start_time", datetime.now())
+    _update_batch_property("start_time", datetime.now(timezone.utc))
 
     try:
         file = get_upload_batch(batch_id) # Get the actual file
@@ -138,6 +138,6 @@ def estimate_processing_time(session: Session, batch_id: UUID4) -> float:
     images_done = batch.images_valid + batch.images_rejected
     progress = images_done / batch.images_total
     assert batch.start_time
-    delta_time = (batch.start_time - datetime.now()).total_seconds()
+    delta_time = (batch.start_time - datetime.now(timezone.utc)).total_seconds()
 
     return (delta_time/progress)
